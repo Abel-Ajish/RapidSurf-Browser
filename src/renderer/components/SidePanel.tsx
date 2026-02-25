@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { Bookmark, History, X, Trash2, ExternalLink, Download as DownloadIcon, FolderOpen } from 'lucide-react'
+import { Bookmark, History, X, Trash2, ExternalLink, Download as DownloadIcon, FolderOpen, FileText, Plus, Save } from 'lucide-react'
 
 interface SidePanelProps {
   onClose: () => void
   onNavigate: (url: string) => void
+  currentUrl?: string
 }
 
-const SidePanel: React.FC<SidePanelProps> = ({ onClose, onNavigate }) => {
-  const [view, setView] = useState<'bookmarks' | 'history' | 'downloads'>('bookmarks')
+const SidePanel: React.FC<SidePanelProps> = ({ onClose, onNavigate, currentUrl }) => {
+  const [view, setView] = useState<'bookmarks' | 'history' | 'downloads' | 'notes'>('bookmarks')
   const [items, setItems] = useState<any[]>([])
   const [downloads, setDownloads] = useState<any[]>([])
+  const [notes, setNotes] = useState<any[]>([])
+  const [currentNote, setCurrentNote] = useState('')
 
   useEffect(() => {
     loadItems()
@@ -21,6 +24,10 @@ const SidePanel: React.FC<SidePanelProps> = ({ onClose, onNavigate }) => {
       })
       return unsubscribe
     }
+
+    if (view === 'notes') {
+      loadNotes()
+    }
   }, [view])
 
   const loadItems = async () => {
@@ -31,6 +38,33 @@ const SidePanel: React.FC<SidePanelProps> = ({ onClose, onNavigate }) => {
       const history = await window.browser.getHistory()
       setItems(history)
     }
+  }
+
+  const loadNotes = async () => {
+    const savedNotes = await window.browser.getHistory() // Using history storage for simplicity for now
+    // Actually, I should use a proper notes storage
+    const storedNotes = localStorage.getItem('rapidsurf-notes')
+    if (storedNotes) setNotes(JSON.parse(storedNotes))
+  }
+
+  const handleSaveNote = () => {
+    if (!currentNote.trim()) return
+    const newNote = {
+      id: Math.random().toString(36).substr(2, 9),
+      content: currentNote,
+      url: currentUrl,
+      timestamp: Date.now()
+    }
+    const newNotes = [newNote, ...notes]
+    setNotes(newNotes)
+    localStorage.setItem('rapidsurf-notes', JSON.stringify(newNotes))
+    setCurrentNote('')
+  }
+
+  const handleDeleteNote = (id: string) => {
+    const newNotes = notes.filter(n => n.id !== id)
+    setNotes(newNotes)
+    localStorage.setItem('rapidsurf-notes', JSON.stringify(newNotes))
   }
 
   const handleClearHistory = async () => {
@@ -61,12 +95,53 @@ const SidePanel: React.FC<SidePanelProps> = ({ onClose, onNavigate }) => {
           >
             <DownloadIcon size={14} /> Downloads
           </button>
+          <button 
+            className={view === 'notes' ? 'active' : ''} 
+            onClick={() => setView('notes')}
+          >
+            <FileText size={14} /> Notes
+          </button>
         </div>
         <button className="close-btn" onClick={onClose}><X size={16} /></button>
       </div>
 
       <div className="side-panel-content">
-        {view === 'downloads' ? (
+        {view === 'notes' ? (
+          <div className="notes-container">
+            <div className="note-input-area">
+              <textarea 
+                placeholder="Take a note for this page..." 
+                value={currentNote}
+                onChange={(e) => setCurrentNote(e.target.value)}
+              />
+              <button className="ai-btn" onClick={handleSaveNote} disabled={!currentNote.trim()}>
+                <Plus size={14} /> Add Note
+              </button>
+            </div>
+            <div className="notes-list">
+              {notes.length === 0 ? (
+                <div className="empty-state">No notes saved yet</div>
+              ) : (
+                notes.map((note) => (
+                  <div key={note.id} className="note-item">
+                    <div className="note-header">
+                      <span className="note-date">{new Date(note.timestamp).toLocaleDateString()}</span>
+                      <button className="delete-btn" onClick={() => handleDeleteNote(note.id)}>
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                    <p className="note-content">{note.content}</p>
+                    {note.url && (
+                      <button className="note-url" onClick={() => onNavigate(note.url)}>
+                        <ExternalLink size={10} /> {new URL(note.url).hostname}
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ) : view === 'downloads' ? (
           downloads.length === 0 ? (
             <div className="empty-state">No downloads yet</div>
           ) : (

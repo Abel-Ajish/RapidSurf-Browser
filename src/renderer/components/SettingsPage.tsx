@@ -17,11 +17,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, theme, onToggleThe
   const [isClearing, setIsClearing] = useState(false)
 
   const toolbarFeatures = [
+    { id: 'bookmarks', label: 'Bookmarks' },
+    { id: 'history', label: 'History' },
     { id: 'find', label: 'Find in Page' },
     { id: 'screenshot', label: 'Capture Screenshot' },
     { id: 'reading', label: 'Reading Mode' },
     { id: 'summarize', label: 'AI Summarize' },
-    { id: 'panel', label: 'History & Bookmarks' },
+    { id: 'panel', label: 'Side Panel' },
     { id: 'theme', label: 'Theme Toggle' },
     { id: 'settings', label: 'Settings Icon' }
   ]
@@ -55,12 +57,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, theme, onToggleThe
               <div className="settings-item">
                 <div className="settings-info">
                   <h4>Startup behavior</h4>
-                  <p>What should RapidSurf do when it starts up?</p>
+                  <p>Choose what RapidSurf does when it starts up</p>
                 </div>
                 <select className="settings-select">
-                  <option>Open a new tab</option>
-                  <option>Continue where you left off</option>
-                  <option>Open specific pages</option>
+                  <option value="restore">Continue where you left off (Recommended)</option>
+                  <option value="newtab">Open the New Tab page</option>
+                  <option value="google">Open Google</option>
                 </select>
               </div>
             </div>

@@ -4,6 +4,9 @@ import TabBar from './components/TabBar'
 import SidePanel from './components/SidePanel'
 import FindBar from './components/FindBar'
 import SettingsPage from './components/SettingsPage'
+import NewTabPage from './components/NewTabPage'
+import HistoryManager from './components/HistoryManager'
+import BookmarksManager from './components/BookmarksManager'
 
 export interface Tab {
   id: string
@@ -15,21 +18,24 @@ export interface Tab {
 
 const App: React.FC = () => {
   const [tabs, setTabs] = useState<Tab[]>([
-    { id: '1', title: 'New Tab', url: 'https://www.google.com', active: true, loading: false }
+    { id: '1', title: 'New Tab', url: 'rapidsurf://newtab', active: true, loading: false }
   ])
   const [summary, setSummary] = useState<string | null>(null)
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [showPanel, setShowPanel] = useState(false)
   const [showFind, setShowFind] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [showBookmarks, setShowBookmarks] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [readingContent, setReadingContent] = useState<string | null>(null)
-  const [pinnedIcons, setPinnedIcons] = useState<string[]>(['find', 'screenshot', 'reading', 'summarize', 'panel', 'theme', 'settings'])
+  const [pinnedIcons, setPinnedIcons] = useState<string[]>(['bookmarks', 'history', 'find', 'screenshot', 'reading', 'summarize', 'panel', 'theme', 'settings'])
+  const [readingProgress, setReadingProgress] = useState(0)
 
   useEffect(() => {
-    window.browser.setAIActive(isSummarizing || !!summary || !!screenshot || !!readingContent || showSettings)
-  }, [isSummarizing, summary, screenshot, readingContent, showSettings])
+    window.browser.setAIActive(isSummarizing || !!summary || !!screenshot || !!readingContent || showSettings || showHistory)
+  }, [isSummarizing, summary, screenshot, readingContent, showSettings, showHistory])
 
   useEffect(() => {
     document.body.setAttribute('data-theme', theme)
@@ -41,8 +47,28 @@ const App: React.FC = () => {
   }, [showPanel])
 
   useEffect(() => {
-    // Initial tab creation in main process
-    window.browser.createTab('1', 'https://www.google.com')
+    // Restore session on startup
+    const restoreSession = async () => {
+      const savedSession = await window.browser.getSession()
+      if (savedSession && savedSession.tabs && savedSession.tabs.length > 0) {
+        setTabs(savedSession.tabs)
+        // Recreate tabs in main process
+        for (const tab of savedSession.tabs) {
+          window.browser.createTab(tab.id, tab.url)
+          if (tab.active) window.browser.switchTab(tab.id)
+        }
+      } else {
+        // Initial tab creation if no session
+        window.browser.createTab('1', 'rapidsurf://newtab')
+      }
+    }
+    
+    restoreSession()
+
+    // Listen for scroll progress
+    const unsubscribeScroll = window.browser.onScrollProgress((progress) => {
+      setReadingProgress(progress)
+    })
 
     // Listen for updates from main process (title/url changes)
     const unsubscribeTabs = window.browser.onTabUpdated((data) => {
@@ -137,6 +163,10 @@ const App: React.FC = () => {
     }
   }
 
+  useEffect(() => {
+    window.browser.saveSession({ tabs })
+  }, [tabs])
+
   const activeTab = tabs.find(t => t.active)
 
   return (
@@ -163,6 +193,8 @@ const App: React.FC = () => {
           onScreenshot={handleScreenshot}
           onReadingMode={handleReadingMode}
           onOpenSettings={() => setShowSettings(true)}
+          onOpenHistory={() => setShowHistory(true)}
+          onOpenBookmarks={() => setShowBookmarks(true)}
           pinnedIcons={pinnedIcons}
         />
       </div>
@@ -173,10 +205,36 @@ const App: React.FC = () => {
           rightOffset={showPanel ? 320 : 20}
         />
       )}
+
+      {activeTab?.url !== 'rapidsurf://newtab' && activeTab?.url !== 'about:blank' && readingProgress > 0 && (
+        <div className="reading-progress-container">
+          <div className="reading-progress-bar" style={{ width: `${readingProgress}%` }} />
+        </div>
+      )}
       
       <div className="content-area">
         {/* BrowserViews are rendered here by the main process */}
+        {(activeTab?.url === 'rapidsurf://newtab' || activeTab?.url === 'about:blank') && (
+          <NewTabPage 
+            onNavigate={(url) => window.browser.go(url)}
+            theme={theme}
+          />
+        )}
       </div>
+
+      {showHistory && (
+        <HistoryManager 
+          onClose={() => setShowHistory(false)}
+          onNavigate={(url) => window.browser.go(url)}
+        />
+      )}
+
+      {showBookmarks && (
+        <BookmarksManager 
+          onClose={() => setShowBookmarks(false)}
+          onNavigate={(url) => window.browser.go(url)}
+        />
+      )}
 
       {/* Overlays and Side Panels moved to top level */}
       {showPanel && (
@@ -190,6 +248,7 @@ const App: React.FC = () => {
             setShowPanel(false)
             window.browser.setPanelWidth(0)
           }}
+          currentUrl={activeTab?.url}
         />
       )}
 

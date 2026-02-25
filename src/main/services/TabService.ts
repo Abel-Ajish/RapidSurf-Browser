@@ -42,6 +42,13 @@ export class TabService {
       const image = await view.webContents.capturePage()
       return image.toDataURL()
     })
+    
+    ipcMain.on('tabs:scroll', (_, { id, progress }) => {
+      if (id === this.activeViewId) {
+        this.mainWindow.webContents.send('tabs:scroll-progress', { progress })
+      }
+    })
+
     ipcMain.handle('tabs:set-user-agent', (_, { userAgent }) => {
       this.views.forEach(view => {
         view.webContents.setUserAgent(userAgent)
@@ -99,8 +106,12 @@ export class TabService {
 
     this.views.set(id, view)
     
-    const formattedUrl = url.startsWith('http') ? url : `https://${url}`
-    view.webContents.loadURL(formattedUrl)
+    if (url === 'rapidsurf://newtab') {
+      view.webContents.loadURL('about:blank')
+    } else {
+      const formattedUrl = url.startsWith('http') ? url : `https://${url}`
+      view.webContents.loadURL(formattedUrl)
+    }
     
     view.webContents.on('did-start-loading', () => {
       this.mainWindow.webContents.send('tabs:updated', { id, loading: true })
@@ -117,10 +128,20 @@ export class TabService {
     view.webContents.on('did-finish-load', () => {
       const currentUrl = view.webContents.getURL()
       const title = view.webContents.getTitle()
-      this.mainWindow.webContents.send('tabs:updated', { id, url: currentUrl, title })
+      this.mainWindow.webContents.send('tabs:updated', { id, url: currentUrl, title, loading: false })
+      
+      // Inject scroll listener for reading progress
+      view.webContents.executeJavaScript(`
+        window.addEventListener('scroll', () => {
+          const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+          const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+          const scrolled = (winScroll / height) * 100;
+          window.electron.ipcRenderer.send('tabs:scroll', { id: '${id}', progress: scrolled });
+        });
+      `)
       
       // Record history
-      if (currentUrl && !currentUrl.startsWith('devtools://')) {
+      if (currentUrl && currentUrl !== 'about:blank' && !currentUrl.startsWith('devtools://') && !currentUrl.startsWith('rapidsurf://')) {
         this.mainWindow.webContents.send('history:add', {
           id: Math.random().toString(36).substr(2, 9),
           title: title || currentUrl,
@@ -170,8 +191,9 @@ export class TabService {
     const view = this.views.get(this.activeViewId)
     if (!view) return
 
-    if (this.isAIActive) {
-      // Hide the native layer completely so DOM overlays can show
+    const url = view.webContents.getURL()
+    if (this.isAIActive || url === 'about:blank' || url.startsWith('rapidsurf://')) {
+      // Hide the native layer so DOM content (New Tab Page, AI overlays) can show
       view.setBounds({ x: 0, y: 0, width: 0, height: 0 })
       return
     }
@@ -189,8 +211,13 @@ export class TabService {
   private navigateActiveTab(url: string) {
     const view = this.getActiveView()
     if (view) {
-      const formattedUrl = url.startsWith('http') ? url : `https://${url}`
-      view.webContents.loadURL(formattedUrl)
+      if (url === 'rapidsurf://newtab') {
+        view.webContents.loadURL('about:blank')
+        this.updateBounds()
+      } else {
+        const formattedUrl = url.startsWith('http') ? url : `https://${url}`
+        view.webContents.loadURL(formattedUrl)
+      }
     }
   }
 

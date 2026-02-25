@@ -24,6 +24,7 @@ export class StorageService {
     const userDataPath = app.getPath('userData')
     this.bookmarksPath = join(userDataPath, 'bookmarks.json')
     this.historyPath = join(userDataPath, 'history.json')
+    this.sessionPath = join(userDataPath, 'session.json')
     this.setupIpc()
   }
 
@@ -39,6 +40,9 @@ export class StorageService {
       if (history.length > 1000) history.pop()
       await this.writeJson(this.historyPath, history)
     })
+
+    ipcMain.handle('storage:get-session', () => this.readJson(this.sessionPath, null))
+    ipcMain.handle('storage:save-session', (_, session) => this.writeJson(this.sessionPath, session))
 
     ipcMain.handle('storage:clear-history', () => this.writeJson(this.historyPath, []))
     ipcMain.handle('storage:clear-browsing-data', async (_, options) => {

@@ -14,6 +14,8 @@ const browserAPI = {
   saveBookmarks: (bookmarks: any) => ipcRenderer.invoke('storage:save-bookmarks', bookmarks),
   getHistory: () => ipcRenderer.invoke('storage:get-history'),
   addHistory: (item: any) => ipcRenderer.invoke('storage:add-history', item),
+  getSession: () => ipcRenderer.invoke('storage:get-session'),
+  saveSession: (session: any) => ipcRenderer.invoke('storage:save-session', session),
   getTabText: () => ipcRenderer.invoke('tabs:get-text'),
   setTheme: (theme: 'light' | 'dark') => ipcRenderer.invoke('tabs:set-theme', { theme }),
   setPanelWidth: (width: number) => ipcRenderer.invoke('tabs:set-panel-width', { width }),
@@ -48,6 +50,11 @@ const browserAPI = {
     const listener = (_: any, item: any) => callback(item)
     ipcRenderer.on('history:add', listener)
     return () => ipcRenderer.removeListener('history:add', listener)
+  },
+  onScrollProgress: (callback: (progress: number) => void) => {
+    const listener = (_: any, { progress }: any) => callback(progress)
+    ipcRenderer.on('tabs:scroll-progress', listener)
+    return () => ipcRenderer.removeListener('tabs:scroll-progress', listener)
   }
 }
 
