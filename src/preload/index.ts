@@ -20,8 +20,31 @@ const browserAPI = {
   setAIActive: (active: boolean) => ipcRenderer.invoke('tabs:set-ai-active', { active }),
   summarize: (text: string) => ipcRenderer.invoke('ai:summarize', { text }),
   analyzeQuery: (query: string) => ipcRenderer.invoke('ai:analyze-query', { query }),
+  findInPage: (text: string, options?: any) => ipcRenderer.invoke('tabs:find-in-page', { text, options }),
+  stopFindInPage: (action: 'clearSelection' | 'keepSelection' | 'activateSelection') => 
+    ipcRenderer.invoke('tabs:stop-find-in-page', { action }),
+  capturePage: () => ipcRenderer.invoke('tabs:capture-page'),
+  getDownloads: () => ipcRenderer.invoke('downloads:get-all'),
+  openDownloadFolder: () => ipcRenderer.invoke('downloads:open-folder'),
   onTabUpdated: (callback: (data: any) => void) => {
-    ipcRenderer.on('tabs:updated', (_, data) => callback(data))
+    const listener = (_: any, data: any) => callback(data)
+    ipcRenderer.on('tabs:updated', listener)
+    return () => ipcRenderer.removeListener('tabs:updated', listener)
+  },
+  onFindResult: (callback: (result: any) => void) => {
+    const listener = (_: any, result: any) => callback(result)
+    ipcRenderer.on('tabs:find-result', listener)
+    return () => ipcRenderer.removeListener('tabs:find-result', listener)
+  },
+  onDownloadsUpdated: (callback: (downloads: any[]) => void) => {
+    const listener = (_: any, downloads: any[]) => callback(downloads)
+    ipcRenderer.on('downloads:updated', listener)
+    return () => ipcRenderer.removeListener('downloads:updated', listener)
+  },
+  onHistoryAdded: (callback: (item: any) => void) => {
+    const listener = (_: any, item: any) => callback(item)
+    ipcRenderer.on('history:add', listener)
+    return () => ipcRenderer.removeListener('history:add', listener)
   }
 }
 

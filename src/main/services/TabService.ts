@@ -30,6 +30,18 @@ export class TabService {
       this.isAIActive = active
       this.updateBounds()
     })
+    ipcMain.handle('tabs:find-in-page', (_, { text, options }) => {
+      this.getActiveView()?.webContents.findInPage(text, options)
+    })
+    ipcMain.handle('tabs:stop-find-in-page', (_, { action }) => {
+      this.getActiveView()?.webContents.stopFindInPage(action)
+    })
+    ipcMain.handle('tabs:capture-page', async () => {
+      const view = this.getActiveView()
+      if (!view) return null
+      const image = await view.webContents.capturePage()
+      return image.toDataURL()
+    })
   }
 
   public setTheme(theme: 'light' | 'dark') {
@@ -109,6 +121,10 @@ export class TabService {
           timestamp: Date.now()
         })
       }
+    })
+
+    view.webContents.on('found-in-page', (event, result) => {
+      this.mainWindow.webContents.send('tabs:find-result', result)
     })
 
     this.switchTab(id)

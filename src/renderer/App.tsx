@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Navbar from './components/Navbar'
 import TabBar from './components/TabBar'
 import SidePanel from './components/SidePanel'
+import FindBar from './components/FindBar'
 
 export interface Tab {
   id: string
@@ -18,11 +19,14 @@ const App: React.FC = () => {
   const [summary, setSummary] = useState<string | null>(null)
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [showPanel, setShowPanel] = useState(false)
+  const [showFind, setShowFind] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [screenshot, setScreenshot] = useState<string | null>(null)
+  const [readingContent, setReadingContent] = useState<string | null>(null)
 
   useEffect(() => {
-    window.browser.setAIActive(isSummarizing || !!summary)
-  }, [isSummarizing, summary])
+    window.browser.setAIActive(isSummarizing || !!summary || !!screenshot || !!readingContent)
+  }, [isSummarizing, summary, screenshot, readingContent])
 
   useEffect(() => {
     document.body.setAttribute('data-theme', theme)
@@ -38,7 +42,7 @@ const App: React.FC = () => {
     window.browser.createTab('1', 'https://www.google.com')
 
     // Listen for updates from main process (title/url changes)
-    window.browser.onTabUpdated((data) => {
+    const unsubscribeTabs = window.browser.onTabUpdated((data) => {
       setTabs(prev => prev.map(tab => {
         if (tab.id === data.id) {
           return { ...tab, ...data }
@@ -48,10 +52,14 @@ const App: React.FC = () => {
     })
 
     // Listen for history additions from main process
-    // @ts-ignore
-    window.electron.ipcRenderer.on('history:add', (_, item) => {
+    const unsubscribeHistory = window.browser.onHistoryAdded((item) => {
       window.browser.addHistory(item)
     })
+
+    return () => {
+      unsubscribeTabs()
+      unsubscribeHistory()
+    }
   }, [])
 
   const handleCreateTab = () => {
@@ -86,6 +94,7 @@ const App: React.FC = () => {
   const handleSummarize = async () => {
     setIsSummarizing(true)
     setSummary(null)
+    setScreenshot(null)
     try {
       const text = await window.browser.getTabText()
       const result = await window.browser.summarize(text)
@@ -104,6 +113,24 @@ const App: React.FC = () => {
       setSummary('Failed to summarize page content.')
     } finally {
       setIsSummarizing(false)
+    }
+  }
+
+  const handleScreenshot = async () => {
+    const dataUrl = await window.browser.capturePage()
+    if (dataUrl) {
+      setScreenshot(dataUrl)
+      setSummary(null)
+      setReadingContent(null)
+    }
+  }
+
+  const handleReadingMode = async () => {
+    const text = await window.browser.getTabText()
+    if (text) {
+      setReadingContent(text)
+      setSummary(null)
+      setScreenshot(null)
     }
   }
 
@@ -129,8 +156,13 @@ const App: React.FC = () => {
           onSummarize={handleSummarize}
           onTogglePanel={() => setShowPanel(!showPanel)}
           onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+          onToggleFind={() => setShowFind(!showFind)}
+          onScreenshot={handleScreenshot}
+          onReadingMode={handleReadingMode}
         />
       </div>
+      
+      {showFind && <FindBar onClose={() => setShowFind(false)} />}
       
       <div className="content-area">
         {/* BrowserViews are rendered here by the main process */}
@@ -171,8 +203,58 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
-  )
-}
+
+      {screenshot && (
+        <div className="ai-overlay">
+          <div className="ai-modal">
+            <div className="ai-modal-header">
+              <h3>Page Screenshot</h3>
+              <button onClick={() => {
+                setScreenshot(null)
+                window.browser.setAIActive(false)
+              }}>×</button>
+            </div>
+            <div className="ai-modal-body" style={{ padding: 0 }}>
+              <img src={screenshot} style={{ width: '100%', height: 'auto', display: 'block' }} />
+              <div style={{ padding: '16px', display: 'flex', justifyContent: 'center' }}>
+                <button 
+                  className="ai-btn" 
+                  style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+                  onClick={() => {
+                    const link = document.createElement('a')
+                    link.href = screenshot
+                    link.download = `screenshot-${Date.now()}.png`
+                    link.click()
+                  }}
+                >
+                  Download Screenshot
+                </button>
+              </div>
+            </div>
+           </div>
+         </div>
+       )}
+
+       {readingContent && (
+         <div className="ai-overlay">
+           <div className="ai-modal" style={{ maxWidth: '800px', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+             <div className="ai-modal-header">
+               <h3>Reading Mode</h3>
+               <button onClick={() => {
+                 setReadingContent(null)
+                 window.browser.setAIActive(false)
+               }}>×</button>
+             </div>
+             <div className="ai-modal-body" style={{ overflowY: 'auto', padding: '40px', lineHeight: '1.6', fontSize: '18px', textAlign: 'left' }}>
+               <div style={{ whiteSpace: 'pre-wrap' }}>
+                 {readingContent}
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
+     </div>
+   )
+ }
 
 export default App

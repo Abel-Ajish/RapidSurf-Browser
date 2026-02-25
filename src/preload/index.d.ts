@@ -21,7 +21,15 @@ declare global {
       setAIActive: (active: boolean) => Promise<void>
       summarize: (text: string) => Promise<string>
       analyzeQuery: (query: string) => Promise<any>
-      onTabUpdated: (callback: (data: { id: string, title?: string, url?: string }) => void) => void
+      findInPage: (text: string, options?: any) => Promise<void>
+      stopFindInPage: (action: 'clearSelection' | 'keepSelection' | 'activateSelection') => Promise<void>
+      capturePage: () => Promise<string | null>
+      getDownloads: () => Promise<any[]>
+      openDownloadFolder: () => Promise<void>
+      onTabUpdated: (callback: (data: { id: string, title?: string, url?: string, loading?: boolean }) => void) => () => void
+      onFindResult: (callback: (result: { matches: number, activeMatchOrdinal: number }) => void) => () => void
+      onDownloadsUpdated: (callback: (downloads: any[]) => void) => () => void
+      onHistoryAdded: (callback: (item: any) => void) => () => void
     }
   }
 }

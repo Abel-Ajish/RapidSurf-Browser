@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, ArrowRight, RotateCw, Home, Sparkles, Menu, Moon, Sun } from 'lucide-react'
+import { ArrowLeft, ArrowRight, RotateCw, Home, Sparkles, Menu, Moon, Sun, Search, Camera, BookOpen } from 'lucide-react'
 
 interface NavbarProps {
   url: string
@@ -12,6 +12,9 @@ interface NavbarProps {
   onSummarize: () => void
   onTogglePanel: () => void
   onToggleTheme: () => void
+  onToggleFind: () => void
+  onScreenshot: () => void
+  onReadingMode: () => void
 }
 
 const Navbar: React.FC<NavbarProps> = ({ 
@@ -24,7 +27,10 @@ const Navbar: React.FC<NavbarProps> = ({
   onReload, 
   onSummarize, 
   onTogglePanel,
-  onToggleTheme
+  onToggleTheme,
+  onToggleFind,
+  onScreenshot,
+  onReadingMode
 }) => {
   const [inputUrl, setInputUrl] = useState(url)
 
@@ -55,6 +61,15 @@ const Navbar: React.FC<NavbarProps> = ({
         />
       </form>
       <div className="nav-actions">
+        <div className="nav-btn" onClick={onToggleFind} title="Find in Page">
+          <Search size={16} />
+        </div>
+        <div className="nav-btn" onClick={onScreenshot} title="Capture Screenshot">
+          <Camera size={16} />
+        </div>
+        <div className="nav-btn" onClick={onReadingMode} title="Reading Mode">
+          <BookOpen size={16} />
+        </div>
         <div className="nav-btn ai-btn" onClick={onSummarize} title="Summarize Page">
           <Sparkles size={16} />
         </div>
