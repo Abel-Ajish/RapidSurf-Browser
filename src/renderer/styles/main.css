@@ -568,6 +568,129 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 15px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .settings-item {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.settings-item:last-child {
+  border-bottom: none;
+}
+
+.settings-view-wrapper {
+  animation: section-fade 0.3s ease-out;
+}
+
+@keyframes section-fade {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Toggle Switch */
+.settings-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+
+.settings-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border-color);
+  transition: .4s;
+  border-radius: 22px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--accent-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* About Section Branding */
+.about-brand {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: var(--bg-color);
+  border-radius: 15px;
+}
+
+.about-logo {
+  width: 60px;
+  height: 60px;
+  background-color: var(--accent-color);
+  color: white;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.about-text h4 {
+  margin: 0 0 5px 0;
+}
+
+.about-text p {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.about-copyright {
+  margin-top: 5px !important;
+  font-size: 11px !important;
+  opacity: 0.5 !important;
+}
+
+.settings-btn-danger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #ef4444;
+  background: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.settings-btn-danger:hover {
+  background-color: #ef4444;
+  color: white;
 }
 
 .settings-info h4 {
