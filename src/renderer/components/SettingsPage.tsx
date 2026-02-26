@@ -14,7 +14,16 @@ interface SettingsPageProps {
 
 type Section = 'general' | 'appearance' | 'privacy' | 'advanced' | 'about'
 
-const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, theme, onToggleTheme, pinnedIcons, onTogglePin, onNavigate }) => {
+const SettingsPage: React.FC<SettingsPageProps> = ({ 
+  onClose, 
+  theme, 
+  onToggleTheme, 
+  pinnedIcons, 
+  onTogglePin, 
+  onNavigate,
+  showBookmarksBar,
+  onToggleBookmarksBar
+}) => {
   const [activeSection, setActiveSection] = useState<Section>('general')
   const [isClearing, setIsClearing] = useState(false)
 

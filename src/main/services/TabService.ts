@@ -232,11 +232,16 @@ export class TabService {
     try {
       const bounds = this.mainWindow.getContentBounds()
       console.log(`Showing BrowserView at bounds: x=0, y=${this.chromeHeight}, w=${bounds.width - this.sidePanelWidth}, h=${bounds.height - this.chromeHeight}`)
+      
+      // Calculate adjusted width and height to remove blank gaps
+      const adjustedWidth = Math.max(0, bounds.width - this.sidePanelWidth)
+      const adjustedHeight = Math.max(0, bounds.height - this.chromeHeight)
+
       view.setBounds({
         x: 0,
         y: this.chromeHeight,
-        width: Math.max(0, bounds.width - this.sidePanelWidth),
-        height: Math.max(0, bounds.height - this.chromeHeight)
+        width: adjustedWidth,
+        height: adjustedHeight
       })
     } catch (err) {
       console.error('Failed to get content bounds or set view bounds:', err)

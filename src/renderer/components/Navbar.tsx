@@ -82,7 +82,9 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <div className="navbar">
-      {loading && <div className="loading-progress"></div>}
+      <div className="loading-progress-container">
+        {loading && <div className="loading-progress-bar"></div>}
+      </div>
       <div className="nav-buttons">
         <div className="nav-btn" onClick={onBack} title="Back"><ArrowLeft size={16} /></div>
         <div className="nav-btn" onClick={onForward} title="Forward"><ArrowRight size={16} /></div>
