@@ -7,6 +7,7 @@ import SettingsPage from './components/SettingsPage'
 import NewTabPage from './components/NewTabPage'
 import HistoryManager from './components/HistoryManager'
 import BookmarksManager from './components/BookmarksManager'
+import BookmarksBar from './components/BookmarksBar'
 
 export interface Tab {
   id: string
@@ -28,11 +29,13 @@ const App: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [showBookmarks, setShowBookmarks] = useState(false)
+  const [showBookmarksBar, setShowBookmarksBar] = useState(true)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [readingContent, setReadingContent] = useState<string | null>(null)
   const [pinnedIcons, setPinnedIcons] = useState<string[]>(['bookmarks', 'history', 'find', 'screenshot', 'reading', 'summarize', 'panel', 'theme', 'settings'])
   const [readingProgress, setReadingProgress] = useState(0)
+  const [hoveredUrl, setHoveredUrl] = useState<string | null>(null)
 
   const activeTab = tabs.find(t => t.active)
   const isNewTab = !activeTab || activeTab?.url === 'rapidsurf://newtab' || activeTab?.url === 'about:blank'
@@ -87,6 +90,11 @@ const App: React.FC = () => {
       setReadingProgress(progress)
     })
 
+    // Listen for hover link events
+    const unsubscribeHover = window.browser.onHoverLink((url) => {
+      setHoveredUrl(url)
+    })
+
     // Listen for updates from main process (title/url changes)
     const unsubscribeTabs = window.browser.onTabUpdated((data) => {
       setTabs(prev => prev.map(tab => {
@@ -104,6 +112,7 @@ const App: React.FC = () => {
 
     return () => {
       unsubscribeScroll()
+      unsubscribeHover()
       unsubscribeTabs()
       unsubscribeHistory()
     }
@@ -213,6 +222,9 @@ const App: React.FC = () => {
           onOpenBookmarks={() => setShowBookmarks(true)}
           pinnedIcons={pinnedIcons}
         />
+        {showBookmarksBar && (
+          <BookmarksBar onNavigate={(url) => window.browser.go(url)} />
+        )}
       </div>
       
       {showFind && (
@@ -250,6 +262,12 @@ const App: React.FC = () => {
           onClose={() => setShowBookmarks(false)}
           onNavigate={(url) => window.browser.go(url)}
         />
+      )}
+
+      {hoveredUrl && (
+        <div className="status-bar">
+          <span>{hoveredUrl}</span>
+        </div>
       )}
 
       {/* Overlays and Side Panels moved to top level */}

@@ -49,6 +49,10 @@ export class TabService {
       }
     })
 
+    ipcMain.on('tabs:hover-link', (_, { url }) => {
+      this.mainWindow.webContents.send('tabs:hover-link-update', { url })
+    })
+
     ipcMain.handle('tabs:set-user-agent', (_, { userAgent }) => {
       this.views.forEach(view => {
         view.webContents.setUserAgent(userAgent)
@@ -134,13 +138,22 @@ export class TabService {
       const title = view.webContents.getTitle()
       this.mainWindow.webContents.send('tabs:updated', { id, url: currentUrl, title, loading: false })
       
-      // Inject scroll listener for reading progress
+      // Inject scroll listener for reading progress and hover listener for status bar
       view.webContents.executeJavaScript(`
         window.addEventListener('scroll', () => {
           const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
           const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
           const scrolled = (winScroll / height) * 100;
           window.electron.ipcRenderer.send('tabs:scroll', { id: '${id}', progress: scrolled });
+        });
+
+        document.addEventListener('mouseover', (e) => {
+          const anchor = e.target.closest('a');
+          if (anchor && anchor.href) {
+            window.electron.ipcRenderer.send('tabs:hover-link', { url: anchor.href });
+          } else {
+            window.electron.ipcRenderer.send('tabs:hover-link', { url: null });
+          }
         });
       `)
       
@@ -213,12 +226,16 @@ export class TabService {
 
     try {
       const bounds = this.mainWindow.getContentBounds()
-      console.log(`Showing BrowserView at bounds: x=0, y=80, w=${bounds.width - this.sidePanelWidth}, h=${bounds.height - 80}`)
+      // Dynamic Y based on Bookmarks Bar visibility would be better, but for now we'll use a fixed value 
+      // based on the new CSS heights: 44 (TabBar) + 48 (Navbar) + 32 (BookmarksBar) = 124
+      const chromeHeight = 124
+      
+      console.log(`Showing BrowserView at bounds: x=0, y=${chromeHeight}, w=${bounds.width - this.sidePanelWidth}, h=${bounds.height - chromeHeight}`)
       view.setBounds({
         x: 0,
-        y: 80, // Navbar + TabBar height
+        y: chromeHeight,
         width: Math.max(0, bounds.width - this.sidePanelWidth),
-        height: Math.max(0, bounds.height - 80)
+        height: Math.max(0, bounds.height - chromeHeight)
       })
     } catch (err) {
       console.error('Failed to get content bounds or set view bounds:', err)

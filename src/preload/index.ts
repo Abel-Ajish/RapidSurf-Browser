@@ -55,6 +55,11 @@ const browserAPI = {
     const listener = (_: any, { progress }: any) => callback(progress)
     ipcRenderer.on('tabs:scroll-progress', listener)
     return () => ipcRenderer.removeListener('tabs:scroll-progress', listener)
+  },
+  onHoverLink: (callback: (url: string | null) => void) => {
+    const listener = (_: any, { url }: any) => callback(url)
+    ipcRenderer.on('tabs:hover-link-update', listener)
+    return () => ipcRenderer.removeListener('tabs:hover-link-update', listener)
   }
 }
 

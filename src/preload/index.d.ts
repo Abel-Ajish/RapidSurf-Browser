@@ -35,6 +35,7 @@ declare global {
       onDownloadsUpdated: (callback: (downloads: any[]) => void) => () => void
       onHistoryAdded: (callback: (item: any) => void) => () => void
       onScrollProgress: (callback: (progress: number) => void) => () => void
+      onHoverLink: (callback: (url: string | null) => void) => () => void
     }
   }
 }

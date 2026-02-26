@@ -40,7 +40,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, theme, onToggleThe
                   <h4>Home page</h4>
                   <p>The page that opens when you click the Home button</p>
                 </div>
-                <input type="text" defaultValue="https://www.google.com" className="settings-input" />
+                <input type="text" defaultValue="rapidsurf://newtab" className="settings-input" />
               </div>
               <div className="settings-item">
                 <div className="settings-info">
@@ -48,10 +48,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, theme, onToggleThe
                   <p>Choose which engine to use when searching from the address bar</p>
                 </div>
                 <select className="settings-select">
-                  <option>Google</option>
+                  <option>Google (Recommended)</option>
                   <option>Bing</option>
-                  <option>DuckDuckGo</option>
-                  <option>Ecosia</option>
+                  <option>DuckDuckGo (Privacy)</option>
+                  <option>Ecosia (Eco-friendly)</option>
                 </select>
               </div>
               <div className="settings-item">
@@ -60,7 +60,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, theme, onToggleThe
                   <p>Choose what RapidSurf does when it starts up</p>
                 </div>
                 <select className="settings-select">
-                  <option value="restore">Continue where you left off (Recommended)</option>
+                  <option value="restore">Continue where you left off</option>
                   <option value="newtab">Open the New Tab page</option>
                   <option value="google">Open Google</option>
                 </select>
@@ -93,45 +93,27 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, theme, onToggleThe
                   </button>
                 </div>
               </div>
-              <div className="settings-item">
-                <div className="settings-info">
-                  <h4>Tab bar position</h4>
-                  <p>Show the tab bar at the top or bottom (coming soon)</p>
-                </div>
-                <select className="settings-select" disabled>
-                  <option>Top</option>
-                  <option>Bottom</option>
-                </select>
-              </div>
-              <div className="settings-item">
-                <div className="settings-info">
-                  <h4>Toolbar icons</h4>
-                  <p>Show text labels next to icons</p>
-                </div>
-                <label className="settings-switch">
-                  <input type="checkbox" />
-                  <span className="slider"></span>
-                </label>
-              </div>
             </div>
 
             <h3>Toolbar Pinned Icons</h3>
             <p className="settings-description">Choose which features appear in the top-right corner next to the search bar.</p>
             <div className="settings-group">
-              {toolbarFeatures.map(feature => (
-                <div key={feature.id} className="settings-item">
-                  <div className="settings-info">
-                    <h4>{feature.label}</h4>
+              <div className="toolbar-grid">
+                {toolbarFeatures.map(feature => (
+                  <div key={feature.id} className="settings-item compact">
+                    <div className="settings-info">
+                      <h4>{feature.label}</h4>
+                    </div>
+                    <button 
+                      className={`pin-btn ${pinnedIcons.includes(feature.id) ? 'active' : ''}`}
+                      onClick={() => onTogglePin(feature.id)}
+                      title={pinnedIcons.includes(feature.id) ? 'Unpin from toolbar' : 'Pin to toolbar'}
+                    >
+                      {pinnedIcons.includes(feature.id) ? <Pin size={16} /> : <PinOff size={16} />}
+                    </button>
                   </div>
-                  <button 
-                    className={`pin-btn ${pinnedIcons.includes(feature.id) ? 'active' : ''}`}
-                    onClick={() => onTogglePin(feature.id)}
-                    title={pinnedIcons.includes(feature.id) ? 'Unpin from toolbar' : 'Pin to toolbar'}
-                  >
-                    {pinnedIcons.includes(feature.id) ? <Pin size={16} /> : <PinOff size={16} />}
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </section>
         )
@@ -262,7 +244,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, theme, onToggleThe
   }
 
   return (
-    <div className="settings-page">
+    <div className="settings-page" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="settings-container">
         <aside className="settings-sidebar">
           <h2>Settings</h2>
@@ -271,37 +253,39 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onClose, theme, onToggleThe
               className={activeSection === 'general' ? 'active' : ''} 
               onClick={() => setActiveSection('general')}
             >
-              <Globe size={18} /> General
+              <Globe size={20} /> General
             </button>
             <button 
               className={activeSection === 'appearance' ? 'active' : ''} 
               onClick={() => setActiveSection('appearance')}
             >
-              <Palette size={18} /> Appearance
+              <Palette size={20} /> Appearance
             </button>
             <button 
               className={activeSection === 'privacy' ? 'active' : ''} 
               onClick={() => setActiveSection('privacy')}
             >
-              <Lock size={18} /> Privacy & Security
+              <Lock size={20} /> Privacy & Security
             </button>
             <button 
               className={activeSection === 'advanced' ? 'active' : ''} 
               onClick={() => setActiveSection('advanced')}
             >
-              <Cpu size={18} /> Advanced
+              <Cpu size={20} /> Advanced
             </button>
             <button 
               className={activeSection === 'about' ? 'active' : ''} 
               onClick={() => setActiveSection('about')}
             >
-              <Info size={18} /> About
+              <Info size={20} /> About
             </button>
           </nav>
         </aside>
 
         <main className="settings-content">
-          <button className="settings-close" onClick={onClose} title="Close Settings"><X size={20} /></button>
+          <button className="settings-close" onClick={onClose} title="Close Settings">
+            <X size={20} />
+          </button>
           <div className="settings-view-wrapper">
             {renderSection()}
           </div>
