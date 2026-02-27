@@ -20,8 +20,10 @@ export class StorageService {
   private bookmarksPath: string
   private historyPath: string
   private sessionPath: string
+  private mainWindow: any // Add reference to notify renderer
 
-  constructor() {
+  constructor(mainWindow?: any) {
+    this.mainWindow = mainWindow
     const userDataPath = app.getPath('userData')
     this.bookmarksPath = join(userDataPath, 'bookmarks.json')
     this.historyPath = join(userDataPath, 'history.json')
@@ -31,7 +33,13 @@ export class StorageService {
 
   private setupIpc() {
     ipcMain.handle('storage:get-bookmarks', () => this.readJson(this.bookmarksPath, []))
-    ipcMain.handle('storage:save-bookmarks', (_, bookmarks) => this.writeJson(this.bookmarksPath, bookmarks))
+    ipcMain.handle('storage:save-bookmarks', async (_, bookmarks) => {
+      const result = await this.writeJson(this.bookmarksPath, bookmarks)
+      if (result && this.mainWindow && !this.mainWindow.isDestroyed()) {
+        this.mainWindow.webContents.send('storage:bookmarks-updated', bookmarks)
+      }
+      return result
+    })
     
     ipcMain.handle('storage:get-history', () => this.readJson(this.historyPath, []))
     ipcMain.handle('storage:add-history', async (_, item: HistoryItem) => {

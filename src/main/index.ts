@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { TabService } from './services/TabService'
@@ -25,6 +25,15 @@ class WindowManager {
 
   private initApp() {
     app.name = 'RapidSurf'
+
+    // Global Error Handling for Main Process
+    process.on('uncaughtException', (error) => {
+      console.error('Uncaught Exception in Main Process:', error)
+    })
+
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+    })
 
     app.whenReady().then(() => {
       electronApp.setAppUserModelId('com.rapidsurf.browser')
@@ -63,10 +72,10 @@ class WindowManager {
 
     // Initialize Services
     this.tabService = new TabService(this.mainWindow)
-    this.securityService = new SecurityService()
-    this.downloadService = new DownloadService(this.mainWindow)
-    this.storageService = new StorageService()
-    this.aiService = new AIService(this.mainWindow)
+    new SecurityService()
+    new DownloadService(this.mainWindow)
+    new StorageService(this.mainWindow)
+    new AIService(this.mainWindow)
 
       this.mainWindow.on('ready-to-show', () => {
       this.mainWindow?.show()

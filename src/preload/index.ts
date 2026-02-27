@@ -61,6 +61,11 @@ const browserAPI = {
     const listener = (_: any, { url }: any) => callback(url)
     ipcRenderer.on('tabs:hover-link-update', listener)
     return () => ipcRenderer.removeListener('tabs:hover-link-update', listener)
+  },
+  onBookmarksUpdated: (callback: (bookmarks: any[]) => void) => {
+    const listener = (_: any, bookmarks: any[]) => callback(bookmarks)
+    ipcRenderer.on('storage:bookmarks-updated', listener)
+    return () => ipcRenderer.removeListener('storage:bookmarks-updated', listener)
   }
 }
 

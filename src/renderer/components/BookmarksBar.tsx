@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Star, Folder, Globe, MoreHorizontal } from 'lucide-react'
+import { Globe, MoreHorizontal } from 'lucide-react'
 
 interface Bookmark {
   id: string
@@ -17,7 +17,15 @@ const BookmarksBar: React.FC<BookmarksBarProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     loadBookmarks()
-    // Listen for storage changes if needed, but for now we'll just reload on mount
+    
+    // Listen for real-time updates from main process
+    const unsubscribe = window.browser.onBookmarksUpdated((updatedBookmarks) => {
+      setBookmarks(Array.isArray(updatedBookmarks) ? updatedBookmarks.slice(0, 12) : [])
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
   }, [])
 
   const loadBookmarks = async () => {
@@ -29,7 +37,15 @@ const BookmarksBar: React.FC<BookmarksBarProps> = ({ onNavigate }) => {
     }
   }
 
-  if (bookmarks.length === 0) return null
+  if (!bookmarks || bookmarks.length === 0) {
+    return (
+      <div className="bookmarks-bar">
+        <div className="bookmarks-list-horizontal">
+          <div className="ntp-empty" style={{ padding: '0 8px', fontSize: '11px', opacity: 0.6 }}>No bookmarks yet. Click the star in the address bar to add one!</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bookmarks-bar">

@@ -31,20 +31,28 @@ const SidePanel: React.FC<SidePanelProps> = ({ onClose, onNavigate, currentUrl }
   }, [view])
 
   const loadItems = async () => {
-    if (view === 'bookmarks') {
-      const bookmarks = await window.browser.getBookmarks()
-      setItems(bookmarks)
-    } else if (view === 'history') {
-      const history = await window.browser.getHistory()
-      setItems(history)
+    try {
+      if (view === 'bookmarks') {
+        const bookmarks = await window.browser.getBookmarks()
+        setItems(Array.isArray(bookmarks) ? bookmarks : [])
+      } else if (view === 'history') {
+        const history = await window.browser.getHistory()
+        setItems(Array.isArray(history) ? history : [])
+      }
+    } catch (err) {
+      console.error(`Failed to load ${view}:`, err)
+      setItems([])
     }
   }
 
   const loadNotes = async () => {
-    const savedNotes = await window.browser.getHistory() // Using history storage for simplicity for now
-    // Actually, I should use a proper notes storage
-    const storedNotes = localStorage.getItem('rapidsurf-notes')
-    if (storedNotes) setNotes(JSON.parse(storedNotes))
+    try {
+      const storedNotes = localStorage.getItem('rapidsurf-notes')
+      if (storedNotes) setNotes(JSON.parse(storedNotes))
+    } catch (err) {
+      console.error('Failed to load notes:', err)
+      setNotes([])
+    }
   }
 
   const handleSaveNote = () => {

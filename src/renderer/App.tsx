@@ -41,6 +41,10 @@ const App: React.FC = () => {
   const isNewTab = !activeTab || activeTab?.url === 'rapidsurf://newtab' || activeTab?.url === 'about:blank'
 
   useEffect(() => {
+    window.browser.setChromeHeight(38 + 42 + (showBookmarksBar ? 32 : 0))
+  }, [showBookmarksBar])
+
+  useEffect(() => {
     try {
       console.log('Visibility state:', { isSummarizing, summary: !!summary, screenshot: !!screenshot, readingContent: !!readingContent, showSettings, showHistory, showBookmarks, isNewTab })
       window.browser.setAIActive(isSummarizing || !!summary || !!screenshot || !!readingContent || showSettings || showHistory || showBookmarks || isNewTab)
@@ -69,16 +73,22 @@ const App: React.FC = () => {
   useEffect(() => {
     // Restore session on startup
     const restoreSession = async () => {
-      const savedSession = await window.browser.getSession()
-      if (savedSession && savedSession.tabs && savedSession.tabs.length > 0) {
-        setTabs(savedSession.tabs)
-        // Recreate tabs in main process
-        for (const tab of savedSession.tabs) {
-          window.browser.createTab(tab.id, tab.url)
-          if (tab.active) window.browser.switchTab(tab.id)
+      try {
+        const savedSession = await window.browser.getSession()
+        if (savedSession && savedSession.tabs && savedSession.tabs.length > 0) {
+          setTabs(savedSession.tabs)
+          // Recreate tabs in main process
+          for (const tab of savedSession.tabs) {
+            await window.browser.createTab(tab.id, tab.url)
+            if (tab.active) await window.browser.switchTab(tab.id)
+          }
+        } else {
+          // Initial tab creation if no session
+          await window.browser.createTab('1', 'rapidsurf://newtab')
         }
-      } else {
-        // Initial tab creation if no session
+      } catch (err) {
+        console.error('Failed to restore session:', err)
+        // Fallback to initial tab
         window.browser.createTab('1', 'rapidsurf://newtab')
       }
     }
@@ -118,33 +128,45 @@ const App: React.FC = () => {
     }
   }, [])
 
-  const handleCreateTab = () => {
-    const newId = Math.random().toString(36).substr(2, 9)
-    const newTab = { id: newId, title: 'New Tab', url: 'https://www.google.com', active: true, loading: false }
-    
-    setTabs(prev => prev.map(t => ({ ...t, active: false })).concat(newTab))
-    window.browser.createTab(newId, newTab.url)
-  }
-
-  const handleSwitchTab = (id: string) => {
-    setTabs(prev => prev.map(t => ({ ...t, active: t.id === id })))
-    window.browser.switchTab(id)
-  }
-
-  const handleCloseTab = (id: string) => {
-    if (tabs.length === 1) return // Keep at least one tab
-    
-    const index = tabs.findIndex(t => t.id === id)
-    const newTabs = tabs.filter(t => t.id !== id)
-    
-    if (tabs[index].active) {
-      const nextTab = newTabs[Math.max(0, index - 1)]
-      nextTab.active = true
-      window.browser.switchTab(nextTab.id)
+  const handleCreateTab = async () => {
+    try {
+      const newId = Math.random().toString(36).substr(2, 9)
+      const newTab = { id: newId, title: 'New Tab', url: 'https://www.google.com', active: true, loading: false }
+      
+      setTabs(prev => prev.map(t => ({ ...t, active: false })).concat(newTab))
+      await window.browser.createTab(newId, newTab.url)
+    } catch (err) {
+      console.error('Failed to create tab:', err)
     }
-    
-    setTabs(newTabs)
-    window.browser.closeTab(id)
+  }
+
+  const handleSwitchTab = async (id: string) => {
+    try {
+      setTabs(prev => prev.map(t => ({ ...t, active: t.id === id })))
+      await window.browser.switchTab(id)
+    } catch (err) {
+      console.error('Failed to switch tab:', err)
+    }
+  }
+
+  const handleCloseTab = async (id: string) => {
+    try {
+      if (tabs.length === 1) return // Keep at least one tab
+      
+      const index = tabs.findIndex(t => t.id === id)
+      const newTabs = tabs.filter(t => t.id !== id)
+      
+      if (tabs[index].active) {
+        const nextTab = newTabs[Math.max(0, index - 1)]
+        nextTab.active = true
+        await window.browser.switchTab(nextTab.id)
+      }
+      
+      setTabs(newTabs)
+      await window.browser.closeTab(id)
+    } catch (err) {
+      console.error('Failed to close tab:', err)
+    }
   }
 
   const handleSummarize = async () => {
@@ -155,15 +177,11 @@ const App: React.FC = () => {
       const text = await window.browser.getTabText()
       const result = await window.browser.summarize(text)
       
-      // If the summary is still not visible, we'll log it to confirm IPC works
       console.log('AI Summary Result:', result)
-      
       setSummary(result)
       
-      // FORCE VISIBILITY: Ensure the panel is closed so summary has full focus
       setShowPanel(false)
-      window.browser.setPanelWidth(0)
-      
+      await window.browser.setPanelWidth(0)
     } catch (error) {
       console.error('Summarization failed:', error)
       setSummary('Failed to summarize page content.')
@@ -173,20 +191,28 @@ const App: React.FC = () => {
   }
 
   const handleScreenshot = async () => {
-    const dataUrl = await window.browser.capturePage()
-    if (dataUrl) {
-      setScreenshot(dataUrl)
-      setSummary(null)
-      setReadingContent(null)
+    try {
+      const dataUrl = await window.browser.capturePage()
+      if (dataUrl) {
+        setScreenshot(dataUrl)
+        setSummary(null)
+        setReadingContent(null)
+      }
+    } catch (err) {
+      console.error('Failed to capture screenshot:', err)
     }
   }
 
   const handleReadingMode = async () => {
-    const text = await window.browser.getTabText()
-    if (text) {
-      setReadingContent(text)
-      setSummary(null)
-      setScreenshot(null)
+    try {
+      const text = await window.browser.getTabText()
+      if (text) {
+        setReadingContent(text)
+        setSummary(null)
+        setScreenshot(null)
+      }
+    } catch (err) {
+      console.error('Failed to enter reading mode:', err)
     }
   }
 
@@ -376,7 +402,7 @@ const App: React.FC = () => {
              onToggleBookmarksBar={() => {
                const newValue = !showBookmarksBar
                setShowBookmarksBar(newValue)
-               window.browser.setChromeHeight(44 + 48 + (newValue ? 32 : 0))
+               window.browser.setChromeHeight(38 + 42 + (newValue ? 32 : 0))
              }}
            />
          )}

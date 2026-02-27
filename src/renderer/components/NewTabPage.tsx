@@ -45,6 +45,8 @@ const NewTabPage: React.FC<NewTabPageProps> = ({ onNavigate, theme }) => {
       setBookmarks(Array.isArray(bms) ? bms.slice(0, 6) : [])
     } catch (err) {
       console.error('Failed to load NTP data:', err)
+      setRecentHistory([])
+      setBookmarks([])
     }
   }
 

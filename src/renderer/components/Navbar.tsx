@@ -85,74 +85,81 @@ const Navbar: React.FC<NavbarProps> = ({
       <div className="loading-progress-container">
         {loading && <div className="loading-progress-bar"></div>}
       </div>
-      <div className="nav-buttons">
-        <div className="nav-btn" onClick={onBack} title="Back"><ArrowLeft size={16} /></div>
-        <div className="nav-btn" onClick={onForward} title="Forward"><ArrowRight size={16} /></div>
-        <div className="nav-btn" onClick={onReload} title="Reload"><RotateCw size={16} /></div>
-        <div className="nav-btn" onClick={() => onNavigate('rapidsurf://newtab')} title="Home"><Home size={16} /></div>
+      <div className="nav-buttons" role="toolbar" aria-label="Navigation">
+        <button className="nav-btn" onClick={onBack} title="Back" aria-label="Go back"><ArrowLeft size={16} /></button>
+        <button className="nav-btn" onClick={onForward} title="Forward" aria-label="Go forward"><ArrowRight size={16} /></button>
+        <button className="nav-btn" onClick={onReload} title="Reload" aria-label="Reload page"><RotateCw size={16} /></button>
+        <button className="nav-btn" onClick={() => onNavigate('rapidsurf://newtab')} title="Home" aria-label="Go home"><Home size={16} /></button>
       </div>
-      <form className="url-bar" onSubmit={handleSubmit}>
-        <div className="url-bar-icon">
+      <form className="url-bar" onSubmit={handleSubmit} role="search">
+        <div className="url-bar-icon" aria-hidden="true">
           {url.startsWith('https') ? <Shield size={14} color="#10b981" /> : <Globe size={14} opacity={0.5} />}
         </div>
         <input 
           className="url-input" 
           value={inputUrl} 
           placeholder="Search or enter URL"
+          aria-label="Address bar"
           onChange={(e) => setInputUrl(e.target.value)}
           onFocus={(e) => e.target.select()}
         />
         {url !== 'rapidsurf://newtab' && url !== 'about:blank' && (
-          <div className="nav-btn" onClick={handleToggleBookmark} style={{ color: isBookmarked ? '#f59e0b' : 'inherit' }}>
+          <button 
+            className="nav-btn" 
+            onClick={handleToggleBookmark} 
+            style={{ color: isBookmarked ? '#f59e0b' : 'inherit' }}
+            aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+            title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+          >
             <Star size={16} fill={isBookmarked ? '#f59e0b' : 'none'} />
-          </div>
+          </button>
         )}
       </form>
-      <div className="nav-actions">
+      <div className="nav-actions" role="toolbar" aria-label="Tools">
         {pinnedIcons.includes('bookmarks') && (
-          <div className="nav-btn" onClick={onOpenBookmarks} title="Bookmarks">
+          <button className="nav-btn" onClick={onOpenBookmarks} title="Bookmarks" aria-label="View bookmarks">
             <Star size={16} />
-          </div>
+          </button>
         )}
         {pinnedIcons.includes('history') && (
-          <div className="nav-btn" onClick={onOpenHistory} title="History">
+          <button className="nav-btn" onClick={onOpenHistory} title="History" aria-label="View history">
             <Clock size={16} />
-          </div>
+          </button>
         )}
         {pinnedIcons.includes('find') && (
-          <div className="nav-btn" onClick={onToggleFind} title="Find in Page">
+          <button className="nav-btn" onClick={onToggleFind} title="Find in Page" aria-label="Find in page">
             <Search size={16} />
-          </div>
+          </button>
         )}
         {pinnedIcons.includes('screenshot') && (
-          <div className="nav-btn" onClick={onScreenshot} title="Capture Screenshot">
+          <button className="nav-btn" onClick={onScreenshot} title="Capture Screenshot" aria-label="Capture screenshot">
             <Camera size={16} />
-          </div>
+          </button>
         )}
         {pinnedIcons.includes('reading') && (
-          <div className="nav-btn" onClick={onReadingMode} title="Reading Mode">
+          <button className="nav-btn" onClick={onReadingMode} title="Reading Mode" aria-label="Reading mode">
             <BookOpen size={16} />
-          </div>
+          </button>
         )}
         {pinnedIcons.includes('summarize') && (
-          <div className="nav-btn ai-btn" onClick={onSummarize} title="Summarize Page">
+          <button className="nav-btn ai-btn" onClick={onSummarize} title="Summarize Page" aria-label="Summarize page with AI">
             <Sparkles size={16} />
-          </div>
+          </button>
         )}
         {pinnedIcons.includes('panel') && (
-          <div className="nav-btn" onClick={onTogglePanel} title="History & Bookmarks">
+          <button className="nav-btn" onClick={onTogglePanel} title="History & Bookmarks" aria-label="Open side panel">
             <Menu size={16} />
-          </div>
+          </button>
         )}
         {pinnedIcons.includes('theme') && (
-          <div className="nav-btn" onClick={onToggleTheme} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+          <button className="nav-btn" onClick={onToggleTheme} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} aria-label="Toggle theme">
             {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-          </div>
+          </button>
         )}
         {pinnedIcons.includes('settings') && (
-          <div className="nav-btn" onClick={onOpenSettings} title="Settings">
+          <button className="nav-btn" onClick={onOpenSettings} title="Settings" aria-label="Open settings">
             <Settings size={16} />
-          </div>
+          </button>
         )}
       </div>
     </div>

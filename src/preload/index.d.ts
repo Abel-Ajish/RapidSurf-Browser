@@ -20,6 +20,7 @@ declare global {
       getTabText: () => Promise<string>
       setTheme: (theme: 'light' | 'dark') => Promise<void>
       setPanelWidth: (width: number) => Promise<void>
+      setChromeHeight: (height: number) => Promise<void>
       setAIActive: (active: boolean) => Promise<void>
       summarize: (text: string) => Promise<string>
       analyzeQuery: (query: string) => Promise<any>
@@ -36,6 +37,7 @@ declare global {
       onHistoryAdded: (callback: (item: any) => void) => () => void
       onScrollProgress: (callback: (progress: number) => void) => () => void
       onHoverLink: (callback: (url: string | null) => void) => () => void
+      onBookmarksUpdated: (callback: (bookmarks: any[]) => void) => () => void
     }
   }
 }

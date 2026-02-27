@@ -43,15 +43,17 @@ export class AIService {
       // Get sentences and filter out very short ones
       const sentences = doc.sentences().out('array').filter(s => s.trim().length > 20)
       
-      if (sentences.length === 0) return 'Could not identify clear sentences to summarize.'
-      if (sentences.length <= 3) return sentences.join(' ')
-
       // Basic heuristic: take the first sentence, and a few middle ones
-      const summary = [
-        sentences[0],
-        sentences[Math.floor(sentences.length / 2)],
-        sentences[sentences.length - 1]
-      ].join(' ')
+      let summary = ''
+      if (sentences.length <= 3) {
+        summary = sentences.join(' ')
+      } else {
+        summary = [
+          sentences[0],
+          sentences[Math.floor(sentences.length / 2)],
+          sentences[sentences.length - 1]
+        ].join(' ')
+      }
 
       return summary + ' (Summarized by AI)'
     } catch (error) {
@@ -69,7 +71,8 @@ export class AIService {
     const isQuestion = doc.questions().length > 0
     const people = doc.people().out('array')
     const places = doc.places().out('array')
-    const dates = doc.dates().out('array')
+    // Use a safer way to get dates if the plugin isn't loaded
+    const dates = (doc as any).dates ? (doc as any).dates().out('array') : []
 
     return {
       isQuestion,

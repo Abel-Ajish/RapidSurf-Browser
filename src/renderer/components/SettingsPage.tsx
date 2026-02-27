@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { X, Globe, Palette, Lock, Cpu, Info, Sun, Moon, Pin, PinOff, Eye, EyeOff } from 'lucide-react'
+import { X, Globe, Palette, Lock, Cpu, Info, Sun, Moon, Pin, PinOff, Eye, EyeOff, Trash2 } from 'lucide-react'
 
 interface SettingsPageProps {
   onClose: () => void
@@ -35,8 +35,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
     { id: 'reading', label: 'Reading Mode' },
     { id: 'summarize', label: 'AI Summarize' },
     { id: 'panel', label: 'Side Panel' },
-    { id: 'theme', label: 'Theme Toggle' },
-    { id: 'settings', label: 'Settings Icon' }
+    { id: 'theme', label: 'Theme Toggle' }
   ]
 
   const renderSection = () => {
@@ -240,8 +239,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <div className="about-logo">RS</div>
                 <div className="about-text">
                   <h4>RapidSurf Browser</h4>
-                  <p>Version 1.2.0 (Stable Build)</p>
-                  <p className="about-copyright">© 2024 RapidSurf Team. All rights reserved.</p>
+                  <p>Version 1.2.5 (Stable Build)</p>
+                  <p className="about-copyright">© 2026 Spaceapp Team. All rights reserved.</p>
                 </div>
               </div>
               <div className="settings-item">
@@ -271,34 +270,44 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
       <div className="settings-container">
         <aside className="settings-sidebar">
           <h2>Settings</h2>
-          <nav>
+          <nav role="tablist">
             <button 
               className={activeSection === 'general' ? 'active' : ''} 
               onClick={() => setActiveSection('general')}
+              role="tab"
+              aria-selected={activeSection === 'general'}
             >
               <Globe size={20} /> General
             </button>
             <button 
               className={activeSection === 'appearance' ? 'active' : ''} 
               onClick={() => setActiveSection('appearance')}
+              role="tab"
+              aria-selected={activeSection === 'appearance'}
             >
               <Palette size={20} /> Appearance
             </button>
             <button 
               className={activeSection === 'privacy' ? 'active' : ''} 
               onClick={() => setActiveSection('privacy')}
+              role="tab"
+              aria-selected={activeSection === 'privacy'}
             >
               <Lock size={20} /> Privacy & Security
             </button>
             <button 
               className={activeSection === 'advanced' ? 'active' : ''} 
               onClick={() => setActiveSection('advanced')}
+              role="tab"
+              aria-selected={activeSection === 'advanced'}
             >
               <Cpu size={20} /> Advanced
             </button>
             <button 
               className={activeSection === 'about' ? 'active' : ''} 
               onClick={() => setActiveSection('about')}
+              role="tab"
+              aria-selected={activeSection === 'about'}
             >
               <Info size={20} /> About
             </button>
