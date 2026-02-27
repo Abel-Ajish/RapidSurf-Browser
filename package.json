@@ -1,7 +1,7 @@
 {
-  "name": "rapidsurf",
+  "name": "rapidsurf-browser",
   "version": "1.0.0",
-  "description": "RapidSurf: A production-ready Electron-based Chromium desktop browser",
+  "description": "RapidSurf Browser: A production-ready Electron-based Chromium desktop browser",
   "main": "./out/main/index.js",
   "author": "RapidSurf Team",
   "license": "MIT",

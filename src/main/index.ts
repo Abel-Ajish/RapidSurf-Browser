@@ -24,7 +24,7 @@ class WindowManager {
   }
 
   private initApp() {
-    app.name = 'RapidSurf'
+    app.name = 'RapidSurf Browser'
 
     // Global Error Handling for Main Process
     process.on('uncaughtException', (error) => {
