@@ -1,3 +1,21 @@
+/*
+ * RapidSurf Browser
+ * Copyright (C) 2026 Abel Ajish
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import React, { useState, useEffect } from 'react'
 import { ArrowLeft, ArrowRight, RotateCw, Home, Sparkles, Menu, Moon, Sun, Search, Camera, BookOpen, Settings, Clock, Shield, Globe, Star } from 'lucide-react'
 
@@ -6,6 +24,7 @@ interface NavbarProps {
   theme: 'light' | 'dark'
   loading: boolean
   onNavigate: (url: string) => void
+  onHome: () => void
   onBack: () => void
   onForward: () => void
   onReload: () => void
@@ -26,6 +45,7 @@ const Navbar: React.FC<NavbarProps> = ({
   theme,
   loading,
   onNavigate, 
+  onHome,
   onBack, 
   onForward, 
   onReload, 
@@ -89,7 +109,7 @@ const Navbar: React.FC<NavbarProps> = ({
         <button className="nav-btn" onClick={onBack} title="Back" aria-label="Go back"><ArrowLeft size={16} /></button>
         <button className="nav-btn" onClick={onForward} title="Forward" aria-label="Go forward"><ArrowRight size={16} /></button>
         <button className="nav-btn" onClick={onReload} title="Reload" aria-label="Reload page"><RotateCw size={16} /></button>
-        <button className="nav-btn" onClick={() => onNavigate('rapidsurf://newtab')} title="Home" aria-label="Go home"><Home size={16} /></button>
+        <button className="nav-btn" onClick={onHome} title="Home" aria-label="Go home"><Home size={16} /></button>
       </div>
       <form className="url-bar" onSubmit={handleSubmit} role="search">
         <div className="url-bar-icon" aria-hidden="true">

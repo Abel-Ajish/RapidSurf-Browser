@@ -1,3 +1,21 @@
+/*
+ * RapidSurf Browser
+ * Copyright (C) 2026 Abel Ajish
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import React, { useState } from 'react'
 import { X, Globe, Palette, Lock, Cpu, Info, Sun, Moon, Pin, PinOff, Eye, EyeOff, Trash2 } from 'lucide-react'
 
@@ -7,9 +25,16 @@ interface SettingsPageProps {
   onToggleTheme: () => void
   pinnedIcons: string[]
   onTogglePin: (id: string) => void
-  onNavigate: (url: string) => void
   showBookmarksBar: boolean
   onToggleBookmarksBar: () => void
+  homepage: string
+  onUpdateHomepage: (url: string) => void
+  searchEngine: string
+  onUpdateSearchEngine: (engine: string) => void
+  startupBehavior: string
+  onUpdateStartupBehavior: (behavior: string) => void
+  userAgent: string
+  onUpdateUA: (ua: string) => void
 }
 
 type Section = 'general' | 'appearance' | 'privacy' | 'advanced' | 'about'
@@ -20,9 +45,16 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onToggleTheme, 
   pinnedIcons, 
   onTogglePin, 
-  onNavigate,
   showBookmarksBar,
-  onToggleBookmarksBar
+  onToggleBookmarksBar,
+  homepage,
+  onUpdateHomepage,
+  searchEngine,
+  onUpdateSearchEngine,
+  startupBehavior,
+  onUpdateStartupBehavior,
+  userAgent,
+  onUpdateUA
 }) => {
   const [activeSection, setActiveSection] = useState<Section>('general')
   const [isClearing, setIsClearing] = useState(false)
@@ -50,18 +82,27 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   <h4>Home page</h4>
                   <p>The page that opens when you click the Home button</p>
                 </div>
-                <input type="text" defaultValue="rapidsurf://newtab" className="settings-input" />
+                <input 
+                  type="text" 
+                  value={homepage} 
+                  onChange={(e) => onUpdateHomepage(e.target.value)}
+                  className="settings-input" 
+                />
               </div>
               <div className="settings-item">
                 <div className="settings-info">
                   <h4>Search engine</h4>
                   <p>Choose which engine to use when searching from the address bar</p>
                 </div>
-                <select className="settings-select">
-                  <option>Google (Recommended)</option>
-                  <option>Bing</option>
-                  <option>DuckDuckGo (Privacy)</option>
-                  <option>Ecosia (Eco-friendly)</option>
+                <select 
+                  className="settings-select"
+                  value={searchEngine}
+                  onChange={(e) => onUpdateSearchEngine(e.target.value)}
+                >
+                  <option value="Google">Google (Recommended)</option>
+                  <option value="Bing">Bing</option>
+                  <option value="DuckDuckGo">DuckDuckGo (Privacy)</option>
+                  <option value="Ecosia">Ecosia (Eco-friendly)</option>
                 </select>
               </div>
               <div className="settings-item">
@@ -69,10 +110,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   <h4>Startup behavior</h4>
                   <p>Choose what RapidSurf does when it starts up</p>
                 </div>
-                <select className="settings-select">
+                <select 
+                  className="settings-select"
+                  value={startupBehavior}
+                  onChange={(e) => onUpdateStartupBehavior(e.target.value)}
+                >
                   <option value="restore">Continue where you left off</option>
-                  <option value="newtab">Open the New Tab page</option>
-                  <option value="google">Open Google</option>
+                  <option value="homepage">Open Home page</option>
                 </select>
               </div>
             </div>
@@ -219,7 +263,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 </div>
                 <select 
                   className="settings-select" 
-                  onChange={(e) => window.browser.setUserAgent(e.target.value)}
+                  value={userAgent}
+                  onChange={(e) => onUpdateUA(e.target.value)}
                 >
                   <option value="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36">Default (Chrome)</option>
                   <option value="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0">Firefox</option>
@@ -239,7 +284,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <div className="about-logo">RS</div>
                 <div className="about-text">
                   <h4>RapidSurf Browser</h4>
-                  <p>Version 1.2.5 (Stable Build)</p>
+                  <p>Version 1.4.0 (Stable Build)</p>
                   <p className="about-copyright">© 2026 Spaceapp Team. All rights reserved.</p>
                 </div>
               </div>

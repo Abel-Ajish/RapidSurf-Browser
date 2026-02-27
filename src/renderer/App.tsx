@@ -1,3 +1,21 @@
+/*
+ * RapidSurf Browser
+ * Copyright (C) 2026 Abel Ajish
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import React, { useState, useEffect } from 'react'
 import Navbar from './components/Navbar'
 import TabBar from './components/TabBar'
@@ -31,11 +49,16 @@ const App: React.FC = () => {
   const [showBookmarks, setShowBookmarks] = useState(false)
   const [showBookmarksBar, setShowBookmarksBar] = useState(true)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [homepage, setHomepage] = useState('rapidsurf://newtab')
+  const [searchEngine, setSearchEngine] = useState('Google')
+  const [startupBehavior, setStartupBehavior] = useState('restore')
+  const [userAgent, setUserAgent] = useState('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36')
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [readingContent, setReadingContent] = useState<string | null>(null)
   const [pinnedIcons, setPinnedIcons] = useState<string[]>(['bookmarks', 'history', 'find', 'screenshot', 'reading', 'summarize', 'panel', 'theme', 'settings'])
   const [readingProgress, setReadingProgress] = useState(0)
   const [hoveredUrl, setHoveredUrl] = useState<string | null>(null)
+  const [isRestored, setIsRestored] = useState(false)
 
   const activeTab = tabs.find(t => t.active)
   const isNewTab = !activeTab || activeTab?.url === 'rapidsurf://newtab' || activeTab?.url === 'about:blank'
@@ -64,6 +87,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     try {
+      window.browser.setUserAgent(userAgent)
+    } catch (err) {
+      console.error('Failed to apply user agent:', err)
+    }
+  }, [userAgent])
+
+  useEffect(() => {
+    try {
       window.browser.setPanelWidth(showPanel ? 300 : 0)
     } catch (err) {
       console.error('Failed to set panel width:', err)
@@ -71,29 +102,58 @@ const App: React.FC = () => {
   }, [showPanel])
 
   useEffect(() => {
-    // Restore session on startup
-    const restoreSession = async () => {
+    // Restore session and settings on startup
+    const restoreData = async () => {
       try {
-        const savedSession = await window.browser.getSession()
-        if (savedSession && savedSession.tabs && savedSession.tabs.length > 0) {
-          setTabs(savedSession.tabs)
-          // Recreate tabs in main process
-          for (const tab of savedSession.tabs) {
-            await window.browser.createTab(tab.id, tab.url)
-            if (tab.active) await window.browser.switchTab(tab.id)
+        let currentSettings: any = null
+        
+        // Restore Settings
+        if (window.browser && typeof window.browser.getSettings === 'function') {
+          currentSettings = await window.browser.getSettings()
+          if (currentSettings) {
+            if (currentSettings.theme) setTheme(currentSettings.theme)
+            if (currentSettings.pinnedIcons) setPinnedIcons(currentSettings.pinnedIcons)
+            if (currentSettings.showBookmarksBar !== undefined) setShowBookmarksBar(currentSettings.showBookmarksBar)
+            if (currentSettings.homepage) setHomepage(currentSettings.homepage)
+            if (currentSettings.searchEngine) setSearchEngine(currentSettings.searchEngine)
+            if (currentSettings.startupBehavior) {
+              setStartupBehavior(currentSettings.startupBehavior === 'newtab' ? 'homepage' : currentSettings.startupBehavior)
+            }
+            if (currentSettings.userAgent) setUserAgent(currentSettings.userAgent)
           }
+        }
+        setIsRestored(true)
+
+        const behavior = currentSettings?.startupBehavior || 'restore'
+        const homeUrl = currentSettings?.homepage || 'rapidsurf://newtab'
+
+        if (behavior === 'homepage') {
+          // Always start with home page
+          setTabs([{ id: '1', title: 'Home', url: homeUrl, active: true, loading: false }])
+          await window.browser.createTab('1', homeUrl)
         } else {
-          // Initial tab creation if no session
-          await window.browser.createTab('1', 'rapidsurf://newtab')
+          // Restore Session
+          const savedSession = await window.browser.getSession()
+          if (savedSession && savedSession.tabs && savedSession.tabs.length > 0) {
+            setTabs(savedSession.tabs)
+            // Recreate tabs in main process
+            for (const tab of savedSession.tabs) {
+              await window.browser.createTab(tab.id, tab.url)
+              if (tab.active) await window.browser.switchTab(tab.id)
+            }
+          } else {
+            // Fallback to home page if no session
+            await window.browser.createTab('1', homeUrl)
+          }
         }
       } catch (err) {
-        console.error('Failed to restore session:', err)
-        // Fallback to initial tab
+        console.error('Failed to restore data:', err)
+        // Ultimate fallback
         window.browser.createTab('1', 'rapidsurf://newtab')
       }
     }
     
-    restoreSession()
+    restoreData()
 
     // Listen for scroll progress
     const unsubscribeScroll = window.browser.onScrollProgress((progress) => {
@@ -127,6 +187,28 @@ const App: React.FC = () => {
       unsubscribeHistory()
     }
   }, [])
+
+  const handleNavigate = async (url: string) => {
+    try {
+      let finalUrl = url
+      if (!url.includes('.') || url.includes(' ')) {
+        const engines: Record<string, string> = {
+          'Google': 'https://www.google.com/search?q=',
+          'Bing': 'https://www.bing.com/search?q=',
+          'DuckDuckGo': 'https://duckduckgo.com/?q=',
+          'Ecosia': 'https://www.ecosia.org/search?q='
+        }
+        const baseUrl = engines[searchEngine] || engines['Google']
+        finalUrl = `${baseUrl}${encodeURIComponent(url)}`
+      } else if (!url.startsWith('http') && !url.startsWith('rapidsurf://') && !url.startsWith('about:')) {
+        finalUrl = `https://${url}`
+      }
+      
+      await window.browser.go(finalUrl)
+    } catch (err) {
+      console.error('Failed to navigate:', err)
+    }
+  }
 
   const handleCreateTab = async () => {
     try {
@@ -220,6 +302,54 @@ const App: React.FC = () => {
     window.browser.saveSession({ tabs })
   }, [tabs])
 
+  useEffect(() => {
+    if (isRestored && window.browser && typeof window.browser.saveSettings === 'function') {
+      window.browser.saveSettings({ 
+        theme, 
+        pinnedIcons, 
+        showBookmarksBar,
+        homepage,
+        searchEngine,
+        startupBehavior,
+        userAgent
+      })
+    }
+  }, [theme, pinnedIcons, showBookmarksBar, homepage, searchEngine, startupBehavior, userAgent, isRestored])
+
+  const handleUpdateSearchEngine = async (engine: string) => {
+    const engineUrls: Record<string, string> = {
+      'Google': 'https://www.google.com',
+      'Bing': 'https://www.bing.com',
+      'DuckDuckGo': 'https://duckduckgo.com',
+      'Ecosia': 'https://www.ecosia.org'
+    }
+    
+    setSearchEngine(engine)
+    
+    const newHomeUrl = engineUrls[engine]
+    if (newHomeUrl && window.browser && typeof window.browser.showConfirm === 'function') {
+      const confirmed = await window.browser.showConfirm(`Would you like to also set your home page to ${newHomeUrl}?`)
+      if (confirmed) {
+        setHomepage(newHomeUrl)
+      }
+    }
+  }
+
+  const handleToggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light'
+    
+    // Use View Transitions API if available for a super smooth effect
+    // @ts-ignore
+    if (document.startViewTransition) {
+      // @ts-ignore
+      document.startViewTransition(() => {
+        setTheme(nextTheme)
+      })
+    } else {
+      setTheme(nextTheme)
+    }
+  }
+
   return (
     <div className="app-container">
       <div className="chrome-area">
@@ -233,13 +363,14 @@ const App: React.FC = () => {
           url={activeTab?.url || ''} 
           theme={theme}
           loading={activeTab?.loading || false}
-          onNavigate={(url) => window.browser.go(url)}
+          onNavigate={handleNavigate}
           onBack={() => window.browser.back()}
           onForward={() => window.browser.forward()}
           onReload={() => window.browser.reload()}
+          onHome={() => handleNavigate(homepage)}
           onSummarize={handleSummarize}
           onTogglePanel={() => setShowPanel(!showPanel)}
-          onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+          onToggleTheme={handleToggleTheme}
           onToggleFind={() => setShowFind(!showFind)}
           onScreenshot={handleScreenshot}
           onReadingMode={handleReadingMode}
@@ -271,7 +402,6 @@ const App: React.FC = () => {
         {(!activeTab || activeTab?.url === 'rapidsurf://newtab' || activeTab?.url === 'about:blank') && (
           <NewTabPage 
             onNavigate={(url) => window.browser.go(url)}
-            theme={theme}
           />
         )}
       </div>
@@ -386,7 +516,7 @@ const App: React.FC = () => {
         {showSettings && (
            <SettingsPage 
              theme={theme}
-             onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+             onToggleTheme={handleToggleTheme}
              onClose={() => setShowSettings(false)}
              pinnedIcons={pinnedIcons}
              onTogglePin={(id) => {
@@ -394,16 +524,20 @@ const App: React.FC = () => {
                  prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
                )
              }}
-             onNavigate={(url) => {
-               window.browser.go(url)
-               setShowSettings(false)
-             }}
              showBookmarksBar={showBookmarksBar}
              onToggleBookmarksBar={() => {
                const newValue = !showBookmarksBar
                setShowBookmarksBar(newValue)
                window.browser.setChromeHeight(38 + 42 + (newValue ? 32 : 0))
              }}
+             homepage={homepage}
+             onUpdateHomepage={setHomepage}
+             searchEngine={searchEngine}
+             onUpdateSearchEngine={handleUpdateSearchEngine}
+             startupBehavior={startupBehavior}
+             onUpdateStartupBehavior={setStartupBehavior}
+             userAgent={userAgent}
+             onUpdateUA={setUserAgent}
            />
          )}
       </div>

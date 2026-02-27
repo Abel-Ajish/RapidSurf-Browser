@@ -62,3 +62,16 @@ Thumbs.db
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Browser Storage
+bookmarks.json
+history.json
+session.json
+settings.json
+downloads.json
+auth.json
+*.db
+*.sqlite
+storage/
+userData/
+

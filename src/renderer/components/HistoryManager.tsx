@@ -1,3 +1,21 @@
+/*
+ * RapidSurf Browser
+ * Copyright (C) 2026 Abel Ajish
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import React, { useState, useEffect } from 'react'
 import { Clock, Trash2, Search, ExternalLink, X } from 'lucide-react'
 
@@ -68,7 +86,7 @@ const HistoryManager: React.FC<HistoryManagerProps> = ({ onClose, onNavigate }) 
         </div>
         
         <div className="history-actions">
-          <div className="find-bar-input-container" style={{ width: '300px' }}>
+          <div className="find-bar-input-container">
             <Search size={16} className="find-icon" />
             <input 
               type="text" 
@@ -77,10 +95,10 @@ const HistoryManager: React.FC<HistoryManagerProps> = ({ onClose, onNavigate }) 
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <button className="ai-btn" onClick={handleClearHistory} style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+          <button className="history-action-btn danger" onClick={handleClearHistory}>
             <Trash2 size={16} /> Clear All
           </button>
-          <button className="navbar-btn" onClick={onClose}>
+          <button className="history-action-btn close-btn" onClick={onClose}>
             <X size={20} />
           </button>
         </div>

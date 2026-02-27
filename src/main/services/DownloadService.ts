@@ -1,3 +1,21 @@
+/*
+ * RapidSurf Browser
+ * Copyright (C) 2026 Abel Ajish
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 
@@ -24,12 +42,15 @@ export class DownloadService {
   private setupIpc() {
     ipcMain.handle('downloads:get-all', () => Array.from(this.downloads.values()))
     ipcMain.handle('downloads:open-folder', () => {
-      shell.openPath(join(this.mainWindow.webContents.session.getStoragePath(), 'downloads'))
+      const storagePath = this.mainWindow.webContents.session.getStoragePath()
+      if (storagePath) {
+        shell.openPath(join(storagePath, 'downloads'))
+      }
     })
   }
 
   private setupDownloadHandler() {
-    this.mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
+    this.mainWindow.webContents.session.on('will-download', (_event, item, _webContents) => {
       const id = item.getETag() || Math.random().toString(36).substr(2, 9)
       const fileName = item.getFilename()
       
@@ -45,7 +66,7 @@ export class DownloadService {
       this.downloads.set(id, download)
       this.mainWindow.webContents.send('downloads:updated', Array.from(this.downloads.values()))
 
-      item.on('updated', (event, state) => {
+      item.on('updated', (_event, state) => {
         const d = this.downloads.get(id)
         if (!d) return
 
@@ -56,7 +77,7 @@ export class DownloadService {
         this.mainWindow.webContents.send('downloads:updated', Array.from(this.downloads.values()))
       })
 
-      item.once('done', (event, state) => {
+      item.once('done', (_event, state) => {
         const d = this.downloads.get(id)
         if (!d) return
 
