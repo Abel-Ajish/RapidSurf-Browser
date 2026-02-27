@@ -37,12 +37,6 @@ Our philosophy is built on three pillars:
 - **Build Tools**: TypeScript, Vite, electron-vite
 - **Icons**: Lucide React
 
-== Screenshots ==
-
-1. **The Dashboard**: A high-resolution view of the redesigned New Tab Page with glassmorphism cards.
-2. **AI in Action**: Showing the Smart Summary modal providing a concise breakdown of a web article.
-3. **Advanced Settings**: A look at the General and Advanced settings panels where privacy and behavior are configured.
-
 == Installation ==
 
 ### For Users
